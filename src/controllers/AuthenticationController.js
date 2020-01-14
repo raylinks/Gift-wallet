@@ -1,36 +1,51 @@
 import User from '../models/User';
 import { get } from 'https';
+const bcrypt = require('bcryptjs');
+
+
+
+export function validateUser(user){
+    const validateEmail = typeof user.email == 'string' && user.email.trim() != '';
+    const validatePassword = typeof user.password == 'string' && user.password.trim() != ''  && user.password.trim().length >= 8;
+    return validateEmail && validatePassword;
+}
+
 
 export  async function createUser(req,res){
-     const { firstname, lastname, email, phone} = req.body;
-    console.log(req.body);
+    console.log("hij");
     try{
-        
-
-        const users = await User.create({
-            
-            firstname: firstname,
-            lastname: lastname,
-            email: email,
-            phone: phone
-    
-        }).then((user) => {
-            console.log(user);
-        });
-
-        if(users){
-            res.json({
-                message:'User created successfully',
-                data: users
-            })
-        }
-    }catch(err){
-        console.log(err);
-        res.status(500).json({
-            message: "unable to create",
-            error: err
-        })
-    }
+   //if(validateUser(req.body)){
+      const user = await User.findOne({
+          where:{
+           email:req.body.email
+          }
+       });
+      console.log(user);
+      if(user){
+            res.status(400)
+              .json({
+                message: "email exist"
+              })
+     
+      }else{
+            const createUser =    User.create({
+              firstname:req.body.firstname,
+              lastname:req.body.lastname,
+              email:req.body.email,
+              password:bcrypt.hashSync(req.body.password,8),
+              phone:req.body.phone
+          })
+          console.log(createUser);
+           res.status(200)
+              .json({
+                message: "Registration is sucesful",
+              
+              })
+      }
+      
+   }catch(err){
+       console.log(err);
+   }
 }
 
 export async function getUsers(req,res){
